@@ -29,7 +29,8 @@ def main(cfg: DictConfig):
     before_train_cmd = '\n'.join(cfg.env.before_train_commands)
     before_train_cmd = before_train_cmd + '\n' if len(before_train_cmd) > 0 else ''
     torch_extensions_dir = os.environ.get('TORCH_EXTENSIONS_DIR', cfg.env.torch_extensions_dir)
-    training_cmd = f'{before_train_cmd}TORCH_EXTENSIONS_DIR={torch_extensions_dir} cd {cfg.experiment_dir} && PYTHONPATH=. {cfg.env.python_bin} src/train.py hydra.run.dir={cfg.experiment_dir} {HYDRA_ARGS}'
+    # training_cmd = f'{before_train_cmd}TORCH_EXTENSIONS_DIR={torch_extensions_dir} cd {cfg.experiment_dir} && PYTHONPATH=. {cfg.env.python_bin} src/train.py hydra.run.dir={cfg.experiment_dir} {HYDRA_ARGS}'
+    training_cmd = f'{before_train_cmd}TORCH_EXTENSIONS_DIR={torch_extensions_dir} cd {cfg.experiment_dir} && python src/train.py hydra.run.dir={cfg.experiment_dir} {HYDRA_ARGS}'
     quiet = cfg.get('quiet', False)
     training_cmd_save_path = os.path.join(cfg.experiment_dir, 'training_cmd.sh')
     cfg_save_path = os.path.join(cfg.experiment_dir, 'experiment_config.yaml')

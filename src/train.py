@@ -26,6 +26,7 @@ from src.metrics import metric_main
 from src.torch_utils import training_stats
 from src.torch_utils import custom_ops
 from src.training.rendering import validate_frustum
+from src.infra.utils import recursive_instantiate
 
 #----------------------------------------------------------------------------
 
@@ -150,8 +151,10 @@ def parse_comma_separated_list(s):
 #----------------------------------------------------------------------------
 
 @hydra.main(config_path="..", config_name="experiment_config.yaml")
+# @hydra.main(config_path="../configs", config_name="config.yaml")
 def main(cfg: DictConfig):
     # Initialize config.
+    # recursive_instantiate(cfg)
     OmegaConf.set_struct(cfg, True)
 
     opts = cfg.training # Training arguments.

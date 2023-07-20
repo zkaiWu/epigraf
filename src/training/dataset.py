@@ -251,7 +251,7 @@ class ImageFolderDataset(Dataset):
         return image
 
     def _load_field(self, field_name: str):
-        dataset_desc_fname = 'dataset.json'
+        dataset_desc_fname = 'dataset_epigraf.json'
         dataset_desc_files = [f for f in self._all_fnames if f.endswith(dataset_desc_fname)]
         if len(dataset_desc_files) == 0:
             return None
