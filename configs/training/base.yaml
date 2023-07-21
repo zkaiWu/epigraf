@@ -25,6 +25,7 @@ tick: 4 # How often to print progress
 val_freq: 100 # How often to compute metrics
 snap: 250 # How often to save snapshots
 image_snap: 100 # How often to save samples?
+save_by_camera_angle: true # Shoud we save image snapshot in camera angle groups
 seed: 0 # Random seed
 fp32: false # Disable mixed-precision
 nobench: false # Disable cuDNN benchmarking
