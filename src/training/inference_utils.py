@@ -56,6 +56,7 @@ def setup_snapshot_image_grid(training_set, cfg, random_seed=0):
             indices = camera_angles_group[camera_angle]
             grid_indices += [indices[x % len(indices)] for x in range(gw)]
             camera_angles_group[camera_angle] = [indices[(i + gw) % len(indices)] for i in range(len(indices))]
+
     return (gw, gh), np.stack(images), np.stack(labels), np.stack(camera_angles)
 
 #----------------------------------------------------------------------------
