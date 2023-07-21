@@ -66,7 +66,6 @@ def setup_snapshot_image_grid(training_set, cfg, random_seed=0):
         # images, labels, camera_angles = zip(*[(training_set[i]['image'],
                                             # training_set[i]['label'],
                                             # training_set[i]['camera_angles']) for i in range(len(indices))])
-        import pdb; pdb.set_trace()
 
     return (gw, gh), np.stack(images), np.stack(labels), np.stack(camera_angles)
 
