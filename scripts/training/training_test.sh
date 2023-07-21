@@ -3,7 +3,7 @@
 
 
 CUDA_VISIBLE_DEVICES=2,3,4,5,6,7 python src/infra/launch.py hydra.run.dir=. \
-    desc=eg3d_fake_gpc0.5-noaug \
+    desc=eg3d_fake_gpc0.5-noaug-fixpose \
     dataset=ffhq_posed \
     dataset.path=/home/zhongkaiwu/data/dreamfusion_data/eg3d_fake/eg3d_generation_data_g4.0_noise500_long_prompt \
     dataset.resolution=256 \
