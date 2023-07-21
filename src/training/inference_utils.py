@@ -38,7 +38,6 @@ def setup_snapshot_image_grid(training_set, cfg, random_seed=0):
         for idx in range(len(training_set)):
             # label = tuple(training_set.get_details(idx).raw_label.flat[::-1])
             camera_angle = tuple(training_set.get_camera_angles(idx).flat[::-1])   # NOTE: may be bugs in the flat
-            import pdb; pdb.set_trace()
             if camera_angle not in camera_angles_group:
                 camera_angles_group[camera_angle] = []
             camera_angles_group[camera_angle].append(idx)
@@ -56,7 +55,17 @@ def setup_snapshot_image_grid(training_set, cfg, random_seed=0):
             indices = camera_angles_group[camera_angle]
             grid_indices += [indices[x % len(indices)] for x in range(gw)]
             camera_angles_group[camera_angle] = [indices[(i + gw) % len(indices)] for i in range(len(indices))]
+    
+        # images, labels, camera_angles = zip(*[training_set[i] for i in grid_indices])
+        batch = [training_set[i] for i in grid_indices]
+        images = [b['image'] for b in batch]
+        labels = [b['label'] for b in batch]
+        camera_angles = [b['camera_angles'] for b in batch]
+        assert cfg.dataset.camera.dist == 'custom', 'samples by camera angle should be used with camera.dist == "custom"'
 
+        # images, labels, camera_angles = zip(*[(training_set[i]['image'],
+                                            # training_set[i]['label'],
+                                            # training_set[i]['camera_angles']) for i in range(len(indices))])
 
     return (gw, gh), np.stack(images), np.stack(labels), np.stack(camera_angles)
 
