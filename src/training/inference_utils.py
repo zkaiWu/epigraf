@@ -30,6 +30,7 @@ def setup_snapshot_image_grid(training_set, cfg, random_seed=0):
         camera_angles = [b['camera_angles'] for b in batch]
     else:
         camera_angles = sample_camera_angles(cfg=cfg.dataset.camera, batch_size=len(batch), device='cpu').numpy()
+
     return (gw, gh), np.stack(images), np.stack(labels), np.stack(camera_angles)
 
 #----------------------------------------------------------------------------
