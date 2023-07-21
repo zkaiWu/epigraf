@@ -16,20 +16,47 @@ from src.training.rendering import sample_camera_angles
 def setup_snapshot_image_grid(training_set, cfg, random_seed=0):
     gw = np.clip(7680 // training_set.image_shape[2], 7, 32)
     gh = np.clip(4320 // training_set.image_shape[1], 4, 32)
+    rnd = np.random.RandomState(random_seed)
 
     # No labels => show random subset of training samples.
-    all_indices = list(range(len(training_set)))
-    np.random.RandomState(random_seed).shuffle(all_indices)
-    grid_indices = [all_indices[i % len(all_indices)] for i in range(gw * gh)]
+    if cfg.training.save_by_camera_angle == False:
+        all_indices = list(range(len(training_set)))
+        rnd.shuffle(all_indices)
+        grid_indices = [all_indices[i % len(all_indices)] for i in range(gw * gh)]
 
-    # Load data.
-    batch = [training_set[i] for i in grid_indices]
-    images = [b['image'] for b in batch]
-    labels = [b['label'] for b in batch]
-    if cfg.dataset.camera.dist == 'custom':
-        camera_angles = [b['camera_angles'] for b in batch]
+        # Load data.
+        batch = [training_set[i] for i in grid_indices]
+        images = [b['image'] for b in batch]
+        labels = [b['label'] for b in batch]
+        if cfg.dataset.camera.dist == 'custom':
+            camera_angles = [b['camera_angles'] for b in batch]
+        else:
+            camera_angles = sample_camera_angles(cfg=cfg.dataset.camera, batch_size=len(batch), device='cpu').numpy()
     else:
-        camera_angles = sample_camera_angles(cfg=cfg.dataset.camera, batch_size=len(batch), device='cpu').numpy()
+        # Group training samples by camera angle
+        camera_angles_group = dict() # label => [idx, ...]
+        for idx in range(len(training_set)):
+            # label = tuple(training_set.get_details(idx).raw_label.flat[::-1])
+            camera_angle = tuple(training_set.get_camera_angles(idx).flat[::-1])   # NOTE: may be bugs in the flat
+            import pdb; pdb.set_trace()
+            if camera_angle not in camera_angles_group:
+                camera_angles_group[camera_angle] = []
+            camera_angles_group[camera_angle].append(idx)
+
+        # Reorder.
+        camera_angle_order = list(camera_angles_group.keys())
+        rnd.shuffle(camera_angle_order)
+        for camera_angle in camera_angle_order:
+            rnd.shuffle(camera_angles_group[camera_angle])
+
+        # Organize into grid.
+        grid_indices = []
+        for y in range(gh):
+            camera_angle = camera_angle_order[y % len(camera_angle_order)]
+            indices = camera_angles_group[camera_angle]
+            grid_indices += [indices[x % len(indices)] for x in range(gw)]
+            camera_angles_group[camera_angle] = [indices[(i + gw) % len(indices)] for i in range(len(indices))]
+
 
     return (gw, gh), np.stack(images), np.stack(labels), np.stack(camera_angles)
 
