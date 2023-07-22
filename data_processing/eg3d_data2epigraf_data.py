@@ -36,8 +36,8 @@ def transform_json(args):
         # angle_p = torch.arctan((transition[2] / transition[1])) # pitch
 
         radius = torch.sqrt(transition[0] ** 2 + transition[1] ** 2 + transition[2] ** 2)
-        # angle_y = torch.arctan((transition[2] / transition[0]))
-        angle_y = torch.arctan((transition[0] / transition[2]))
+        angle_y = torch.arctan((transition[2] / transition[0]))
+        # angle_y = torch.arctan((transition[0] / transition[2]))
         angle_p = torch.arccos(transition[1] / radius)
         # if angle_y < 0:
         #     angle_y = angle_y + np.pi
