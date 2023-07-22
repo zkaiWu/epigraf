@@ -2,15 +2,14 @@ import json
 import argparse
 import os
 import torch 
+import numpy as np
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_dir', type=str) # the FFHQ dataset created by `dataset_preprocessing/ffhq/runme.py`
-    parser.add_argument('--output_json', type=str) # this is the output path to write the new zip
     args = parser.parse_args()
     return args
-
 
 
 def transform_json(args):
@@ -18,7 +17,7 @@ def transform_json(args):
     This function can transform the eg3d camera pose to epigraf camera angle
     """
     input_dir = args.input_dir
-    eg3d_json_path = os.path.join(input_dir, 'dataset.json')
+    eg3d_json_path = os.path.join(input_dir, 'dataset_eg3d.json')
 
     epigraf_json_path = os.path.join(input_dir, 'dataset_epigraf.json')
     epigraf_camera_angle = {
@@ -37,9 +36,11 @@ def transform_json(args):
         # angle_p = torch.arctan((transition[2] / transition[1])) # pitch
 
         radius = torch.sqrt(transition[0] ** 2 + transition[1] ** 2 + transition[2] ** 2)
-        print(radius)
-        angle_y = torch.arctan((transition[2] / transition[0]))
+        # angle_y = torch.arctan((transition[2] / transition[0]))
+        angle_y = torch.arctan((transition[0] / transition[2]))
         angle_p = torch.arccos(transition[1] / radius)
+        # if angle_y < 0:
+        #     angle_y = angle_y + np.pi
         epigraf_camera_angle['camera_angles'][key] = [angle_y.item(), angle_p.item(), 0.0]
         
     with open(epigraf_json_path, 'w') as epigraf_jfp:
