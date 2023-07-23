@@ -152,7 +152,50 @@ def generate_camera_angles(camera, default_fov: Optional[float]=None):
         steps = np.linspace(0, 1, camera.num_frames)
         pitch = np.pi / 2 + camera.pitch_diff * np.cos(steps * 2 * np.pi) # [num_frames]
         yaw = camera.yaw_diff * np.sin(steps * 2 * np.pi) # [num_frames]
-        fovs = default_fov + camera.fov_diff * np.sin(steps * 2 * np.pi) # [num_frames]
+        fovs = default_fov + camera.fov_diff * np.sin(steps * 2 * np.pi) # [num_frames] +
+        angles = np.stack([yaw, pitch, np.zeros(camera.num_frames)], axis=1) # [num_frames, 3]
+    elif camera.name == 'points':
+        angles = np.stack([camera.yaws, np.ones(len(camera.yaws)) * camera.pitch, np.zeros(len(camera.yaws))], axis=1) # [num_angles, 3]
+        fovs = None
+    elif camera.name == 'wiggle':
+        yaws = np.linspace(camera.yaw_left, camera.yaw_right, camera.num_frames) # [num_frames]
+        pitches = camera.pitch_diff * np.cos(np.linspace(0, 1, camera.num_frames) * 2 * np.pi) + np.pi/2
+        angles = np.stack([yaws, pitches, np.zeros(yaws.shape)], axis=1) # [num_frames, 3]
+        fovs = None
+    elif camera.name == 'line':
+        yaws = np.linspace(camera.yaw_left, camera.yaw_right, camera.num_frames) # [num_frames]
+        pitches = np.linspace(camera.pitch_left, camera.pitch_right, camera.num_frames) # [num_frames]
+        angles = np.stack([yaws, pitches, np.zeros(yaws.shape)], axis=1) # [num_frames, 3]
+        fov = default_fov if camera.fov is None else camera.fov # [1]
+        fovs = np.array([fov]).repeat(camera.num_frames) # [num_frames]
+    elif camera.name == 'uniform_sampling':
+        assert not default_fov is None
+        # steps = np.linspace(0, 1, camera.num_frames)
+        # pitch = np.pi / 2 + camera.pitch_diff * np.cos(steps * 2 * np.pi) # [num_frames]
+        # yaw = camera.yaw_diff * np.sin(steps * 2 * np.pi) # [num_frames]
+        # fovs = default_fov
+        pitch = np.random.uniform(-camera.pitch_diff, camera.pitch_diff, camera.num_frames) + np.pi / 2
+        yaw = np.random.uniform(-camera.yaw_diff, camera.yaw_diff, camera.num_frames)
+        fovs = default_fov + np.zeros_like(pitch)
+    
+        angles = np.stack([yaw, pitch, np.zeros(camera.num_frames)], axis=1) # [num_frames, 3]
+    else:
+        raise NotImplementedError(f'Unknown camera: {camera.name}')
+
+    assert angles.shape[1] == 3, f"Wrong shape: {angles.shape}"
+
+    return angles, fovs
+
+#----------------------------------------------------------------------------
+
+
+def generate_uniform_camera_angles(camera, default_fov: Optional[float]=None):
+    if camera.name == 'front_circle':
+        assert not default_fov is None
+        steps = np.linspace(0, 1, camera.num_frames)
+        pitch = np.pi / 2 + camera.pitch_diff * np.cos(steps * 2 * np.pi) # [num_frames]
+        yaw = camera.yaw_diff * np.sin(steps * 2 * np.pi) # [num_frames]
+        fovs = default_fov + camera.fov_diff * np.sin(steps * 2 * np.pi) # [num_frames] +
         angles = np.stack([yaw, pitch, np.zeros(camera.num_frames)], axis=1) # [num_frames, 3]
     elif camera.name == 'points':
         angles = np.stack([camera.yaws, np.ones(len(camera.yaws)) * camera.pitch, np.zeros(len(camera.yaws))], axis=1) # [num_angles, 3]
@@ -174,5 +217,3 @@ def generate_camera_angles(camera, default_fov: Optional[float]=None):
     assert angles.shape[1] == 3, f"Wrong shape: {angles.shape}"
 
     return angles, fovs
-
-#----------------------------------------------------------------------------

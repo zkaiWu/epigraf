@@ -1,0 +1,7 @@
+# @package _group_
+
+name: uniform_sampling 
+num_frames: 200 
+yaw_diff: 0.4
+pitch_diff: 0.4
+fov_diff: 1.0

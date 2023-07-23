@@ -16,6 +16,7 @@ import torchvision as tv
 from torchvision.utils import make_grid
 import torchvision.transforms.functional as TVF
 from tqdm import tqdm
+import json
 
 from src.training.inference_utils import generate_trajectory, generate, generate_camera_angles
 from scripts.utils import load_generator, set_seed, maybe_makedirs, lanczos_resize_tensors
@@ -42,10 +43,12 @@ def generate_vis(cfg: DictConfig):
     maybe_makedirs(save_dir)
     assert (not cfg.seeds is None) or (not cfg.num_seeds is None), "You must specify either `num_seeds` or `seeds`"
     seeds = cfg.seeds if cfg.num_seeds is None else np.arange(cfg.num_seeds)
+    if isinstance(seeds, int):
+        seeds = [seeds]
 
     if cfg.vis.name == 'front_grid':
-        ws = sample_ws_from_seeds(G, seeds, cfg, device) # [num_grids, num_ws, w_dim]
-        trajectory = generate_camera_angles(cfg.camera, default_fov=None)[0][:, :2] # [num_grids, 2]
+        ws, z, c = sample_ws_from_seeds(G, seeds, cfg, device) # [num_grids, num_ws, w_dim]
+        trajectory = generate_camera_angles(cfg.camera, default_fov=G.cfg.dataset.camera.fov)[0][:, :2] # [num_grids, 2]
         images = generate_trajectory(cfg, G, ws, trajectory) # [num_traj_steps, num_samples, c, h, w]
         images = images.permute(1, 0, 2, 3, 4) # [num_samples, num_traj_steps, c, h, w]
 
@@ -62,6 +65,34 @@ def generate_vis(cfg: DictConfig):
                 subgrid
             ], dim=1) # [c, h + 2, grid_h]
             TVF.to_pil_image(grid).save(os.path.join(save_dir, f'seed-{seed:04d}.jpg'), q=95)
+    if cfg.vis.name == 'front_uniform_grid':
+        ws, z, c = sample_ws_from_seeds(G, seeds, cfg, device) # [num_grids, num_ws, w_dim]
+        trajectory = generate_camera_angles(cfg.camera, default_fov=G.cfg.dataset.camera.fov)[0][:, :2] # [num_grids, 2]
+        images = generate_trajectory(cfg, G, ws, trajectory) # [num_traj_steps, num_samples, c, h, w]
+        images = images.permute(1, 0, 2, 3, 4) # [num_samples, num_traj_steps, c, h, w]
+        save_image_dir = os.path.join(save_dir, f'seed{seeds[0]:04d}', 'images')
+        os.makedirs(save_image_dir, exist_ok=True)
+        for i, image in enumerate(images[0]):
+            TVF.to_pil_image(image).save(os.path.join(save_image_dir, f'{i}.png'), q=95)
+        with open(os.path.join(os.path.dirname(save_image_dir), 'camera_angels.json'), 'w') as f:
+            json.dump(trajectory.tolist(), f, indent=4)
+            
+            # f.write('\n'.join([str(seed) for seed in seeds]))
+        
+
+        # for seed, grid in tqdm(list(zip(seeds, images)), desc='Saving'):
+        #     pad_size, num_angles, h, w = 2, grid.shape[0], grid.shape[2], grid.shape[3]
+        #     h_small, w_small = h // (num_angles - 1), w // (num_angles - 1)
+        #     main_img = grid[[0]] # [1, c, h, w]
+        #     small_imgs = grid[1:] # [num_angles - 1, c, h, w]
+        #     small_imgs = lanczos_resize_tensors(small_imgs, size=(h_small, w_small)) # [num_angles - 1, c, h_small, w_small]
+        #     main_img = lanczos_resize_tensors(main_img, size=(h + pad_size, w + pad_size))
+        #     subgrid = make_grid(small_imgs, nrow=len(trajectory) - 1) # [c, grid_h, grid_w]
+        #     grid = torch.cat([
+        #         TVF.pad(main_img, padding=(pad_size, pad_size, pad_size, 0)).squeeze(0),
+        #         subgrid
+        #     ], dim=1) # [c, h + 2, grid_h]
+        #     TVF.to_pil_image(grid).save(os.path.join(save_dir, f'seed-{seed:04d}.jpg'), q=95)
     elif cfg.vis.name == 'density':
         ws = sample_ws_from_seeds(G, seeds, cfg, device) # [num_objects, num_ws, w_dim]
         density = generate_density(cfg, G, ws) # [num_objects, resolution, resolution, resolution]
@@ -111,7 +142,7 @@ def generate_vis(cfg: DictConfig):
             tv.io.write_video(save_path, video, fps=cfg.vis.fps, video_codec='h264', options={'crf': '10'})
     elif cfg.vis.name == 'video':
         angles, fovs = generate_camera_angles(cfg.camera, default_fov=G.cfg.dataset.camera.fov) # [num_frames, 3], [num_frames]
-        ws = sample_ws_from_seeds(G, seeds, cfg, device, num_interp_steps=0) # [num_videos, num_ws, w_dim]
+        ws, z, c = sample_ws_from_seeds(G, seeds, cfg, device, num_interp_steps=0) # [num_videos, num_ws, w_dim]
         images = generate_trajectory(cfg, G, ws, angles[:, :2], fovs=fovs, **cfg.synthesis_kwargs) # [num_frames, num_videos, c, h, w]
         images = images.permute(1, 0, 2, 3, 4) # [num_videos, num_frames, c, h, w]
         for seed, video_frames in tqdm(list(zip(seeds, images)), desc='Saving'):
@@ -120,7 +151,7 @@ def generate_vis(cfg: DictConfig):
             tv.io.write_video(save_path, video, fps=cfg.vis.fps, video_codec='h264', options={'crf': '10'})
     elif cfg.vis.name == 'video_grid':
         angles, fovs = generate_camera_angles(cfg.camera, default_fov=G.cfg.dataset.camera.fov) # [num_frames, 3], [num_frames]
-        ws = sample_ws_from_seeds(G, seeds, cfg, device, num_interp_steps=0) # [num_videos, num_ws, w_dim]
+        ws, z, c = sample_ws_from_seeds(G, seeds, cfg, device, num_interp_steps=0) # [num_videos, num_ws, w_dim]
         images = generate_trajectory(cfg, G, ws, angles[:, :2], fovs=fovs, **cfg.synthesis_kwargs) # [num_frames, num_videos, c, h, w]
         for grid_idx in tqdm(list(range(0, (len(seeds) + cfg.vis.num_videos_per_grid - 1) // cfg.vis.num_videos_per_grid)), desc='Saving'):
             grid_slice = slice(grid_idx * cfg.vis.num_videos_per_grid, (grid_idx + 1) * cfg.vis.num_videos_per_grid, 1)
@@ -171,7 +202,7 @@ def sample_z_from_seeds(seeds: List[int], z_dim: int) -> torch.Tensor:
 
 def sample_c_from_seeds(seeds: List[int], c_dim: int, device: str='cpu') -> torch.Tensor:
     if c_dim == 0:
-        return torch.empty(len(seeds), 0)
+        return torch.empty(len(seeds), 0).to(device)
     c_idx = [np.random.RandomState(s).choice(np.arange(c_dim), size=1).item() for s in seeds] # [num_samples]
     return c_idx_to_c(c_idx, c_dim, device)
 
@@ -187,6 +218,7 @@ def c_idx_to_c(c_idx: List[int], c_dim: int, device: str) -> torch.Tensor:
 #----------------------------------------------------------------------------
 
 def sample_ws_from_seeds(G, seeds: List[int], cfg: DictConfig, device: str, num_interp_steps: int=0,  classes: Optional[List[int]]=None):
+    G.to(device)
     if num_interp_steps == 0:
         z = sample_z_from_seeds(seeds, G.z_dim).to(device) # [num_samples, z_dim]
         if classes is None:
