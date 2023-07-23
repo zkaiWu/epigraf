@@ -120,8 +120,6 @@ def image_sr(rank, world_size, args):
         # val_dataloader,
     ]
     print(len(train_dataset))
-
-    print(len(train_dataset))
     for dataloader in dataloader_list:
         for data in dataloader:
             image = data['image']
@@ -148,7 +146,6 @@ def copy_json(args):
 
     input_dir = args.input_dir 
     output_dir = args.output_dir
-    import pdb; pdb.set_trace()
 
     for obj_name in os.listdir(input_dir):
         output_obj_name = obj_name 
@@ -160,9 +157,9 @@ def copy_json(args):
             print(obj_dir)
             print(sub_name)
 
-            if sub_name == 'meta.json':
+            if sub_name == 'camera_angels.json':
                 json_output_dict = {
-                    "labels": {}
+                    "camera_angles": {}
                 }
 
                 json_path = os.path.join(obj_dir, sub_name)
@@ -170,13 +167,13 @@ def copy_json(args):
                     meta_data = json.load(f)
                 
                 for i, meta in enumerate(meta_data):
-                    camera_params = meta['camera_params']
                     for per_view_idx in range(args.image_per_view):
                         # json_output_dict['labels'].append({f"{i}_{per_view_idx}.png": camera_params[0]})
-                        json_output_dict['labels'][f"{i}_{per_view_idx}.png"] = camera_params[0]
+                        # json_output_dict['labels'][f"{i}_{per_view_idx}.png"] = camera_params[0]
+                        json_output_dict['camera_angles'][f"{i}_{per_view_idx}.png"] = meta
 
-                json_output_dict['cam_pivot'] = meta_data[0]['cam_pivot']
-                json_output_dict['cam_radius'] = meta_data[0]['cam_radius']
+                # json_output_dict['cam_pivot'] = meta_data[0]['cam_pivot']
+                # json_output_dict['cam_radius'] = meta_data[0]['cam_radius']
 
                 os.makedirs(output_dir, exist_ok=True)
                 with open(os.path.join(output_dir, 'dataset.json'), 'w') as f:
@@ -206,11 +203,12 @@ def main(args):
     world_size = args.world_size
     print(world_size)
     copy_json(args)
-    mp.spawn(image_sr, args=(world_size, args), nprocs=world_size, join=True)
+    # mp.spawn(image_sr, args=(world_size, args), nprocs=world_size, join=True)
 
 
 """
 CUDA_VISIBLE_DEVICES=0,2,3 python dataset_preprocessing/sr3d_data_generation/upsample_data_floyd_generation.py --input_dir /data5/wuzhongkai/data/dreamfusion_data/eg3d_generation_data/seed0001 --output_dir /data5/wuzhongkai/data/dreamfusion_data/eg3d_fake/eg3d_generation_data_ffhqformat --guidance_scale 0.0 --noise_level 0 --num_inference_steps 50 --image_per_view 50 --batch_size 8 --world_size 4 --port 5678
+CUDA_VISIBLE_DEVICES=0,1,3 python data_processing/upsample_data_floyd_generation.py --input_dir /home2/zhongkaiwu/data/dreamfusion_data/epigraf_generation_data/seed0005/ --output_dir /home2/zhongkaiwu/data/dreamfusion_data/epigraf_fake/eg3d_generation_data_g4.0_noise500_long_prompt --guidance_scale 4.0 --noise_level 500 --num_inference_steps 50 --image_per_view 50 --batch_size 8 --world_size 3 --port 5678 --prompt_mode single --prompt A middle-aged woman with a wrinkled face, brown hair and a smile 
 """
 
 if __name__ == '__main__':
