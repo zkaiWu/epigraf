@@ -38,7 +38,8 @@ def transform_json(args):
 
         radius = torch.sqrt(transition[0] ** 2 + transition[1] ** 2 + transition[2] ** 2)
         print(radius)
-        angle_y = torch.arctan((transition[2] / transition[0]))
+        # angle_y = torch.arctan((transition[2] / transition[0]))
+        angle_y = torch.arctan((transition[0] / transition[2]))
         angle_p = torch.arccos(transition[1] / radius)
         epigraf_camera_angle['camera_angles'][key] = [angle_y.item(), angle_p.item(), 0.0]
         
