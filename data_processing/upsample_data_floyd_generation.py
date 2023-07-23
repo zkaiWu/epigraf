@@ -170,6 +170,7 @@ def copy_json(args):
                     for per_view_idx in range(args.image_per_view):
                         # json_output_dict['labels'].append({f"{i}_{per_view_idx}.png": camera_params[0]})
                         # json_output_dict['labels'][f"{i}_{per_view_idx}.png"] = camera_params[0]
+                        import pdb; pdb.set_trace()
                         json_output_dict['camera_angles'][f"{i}_{per_view_idx}.png"] = meta
 
                 # json_output_dict['cam_pivot'] = meta_data[0]['cam_pivot']
