@@ -94,13 +94,13 @@ def generate_vis(cfg: DictConfig):
         #     ], dim=1) # [c, h + 2, grid_h]
         #     TVF.to_pil_image(grid).save(os.path.join(save_dir, f'seed-{seed:04d}.jpg'), q=95)
     elif cfg.vis.name == 'density':
-        ws = sample_ws_from_seeds(G, seeds, cfg, device) # [num_objects, num_ws, w_dim]
+        ws, z, c = sample_ws_from_seeds(G, seeds, cfg, device) # [num_objects, num_ws, w_dim]
         density = generate_density(cfg, G, ws) # [num_objects, resolution, resolution, resolution]
         trajectory = torch.tensor([cfg.yaws[0], np.pi * 3 / 8]).unsqueeze(0).numpy() # [1, 2]
         images = generate_trajectory(cfg, G, ws, trajectory).squeeze(0) # [num_samples, c, h, w]
         for seed, density_field, img in tqdm(list(zip(seeds, density, images)), desc='Saving'):
             np.save(os.path.join(save_dir, f'seed-{seed:04d}'), density_field)
-            TVF.to_pil_image(img).save(os.path.join(save_dir, f'seed-{seed:04d}.jpg'), q=95)
+            TVF.to_pil_image(img).save(os.path.join(save_dir, f'seed-{seed:04d}.png'), q=95)
     elif cfg.vis.name == 'interp':
         trajectory = torch.tensor([0.0, np.pi * 3 / 8]).unsqueeze(0).numpy() # [1, 3]
         ws = sample_ws_from_seeds(G, seeds, cfg, device, cfg.num_interp_steps) # [num_interp_steps, num_grids, num_ws, w_dim]

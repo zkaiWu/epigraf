@@ -142,6 +142,7 @@ def get_initial_rays_trig(batch_size: int, num_steps: int, device, fov: float, r
         z_vals = z_vals.repeat(batch_size, 1, 1, 1) # [batch_size, h * w, num_steps, 1]
         rays_d_cam = rays_d_cam.repeat(batch_size, 1, 1) # [batch_size, h * w, 3]
 
+    import pdb; pdb.set_trace()
     return z_vals, rays_d_cam
 
 #----------------------------------------------------------------------------
