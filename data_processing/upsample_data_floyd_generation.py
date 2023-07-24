@@ -170,14 +170,16 @@ def copy_json(args):
                     for per_view_idx in range(args.image_per_view):
                         # json_output_dict['labels'].append({f"{i}_{per_view_idx}.png": camera_params[0]})
                         # json_output_dict['labels'][f"{i}_{per_view_idx}.png"] = camera_params[0]
-                        import pdb; pdb.set_trace()
-                        json_output_dict['camera_angles'][f"{i}_{per_view_idx}.png"] = meta
+                        camera_data = copy.deepcopy(meta)
+                        camera_data.append(0.0)
+                        json_output_dict['camera_angles'][f"{i}_{per_view_idx}.png"] = camera_data 
+
 
                 # json_output_dict['cam_pivot'] = meta_data[0]['cam_pivot']
                 # json_output_dict['cam_radius'] = meta_data[0]['cam_radius']
 
                 os.makedirs(output_dir, exist_ok=True)
-                with open(os.path.join(output_dir, 'dataset.json'), 'w') as f:
+                with open(os.path.join(output_dir, 'dataset_epigraf.json'), 'w') as f:
                     json.dump(json_output_dict, f, indent=4)
 
 

@@ -5,9 +5,9 @@ NUM_GPU=$2
 BATCH_SIZE=$3
 
 CUDA_VISIBLE_DEVICES=$CIDX python src/infra/launch.py hydra.run.dir=. \
-    desc=eg3d_fake_gpc0.5-noaug-fixpose-epigraffake \
+    desc=epigraf_fake_gpc0.5_noaug_dloss \
     dataset=ffhq_posed \
-    dataset.path=/home/zhongkaiwu/data/dreamfusion_data/epigraf_fake/epigraf_generation_data_g4.0_noise500_long_prompt \
+    dataset.path=/home2/zhongkaiwu/data/dreamfusion_data/epigraf_fake/epigraf_generation_data_g4.0_noise500_long_prompt \
     dataset.resolution=256 \
     training.gamma=0.1 \
     training.resume=null \

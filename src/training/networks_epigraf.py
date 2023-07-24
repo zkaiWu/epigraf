@@ -279,6 +279,24 @@ class SynthesisNetwork(torch.nn.Module):
 
         return output[:, :, -1:] # [batch_size, num_coords, 1]
 
+    def compute_densities_gradient(self, ws: torch.Tensor, coords: torch.Tensor, max_batch_res: int=32, use_bg: bool=False, **block_kwargs) -> torch.Tensor:
+        """
+        coords: [batch_size, num_points, 3]
+        """
+        assert not use_bg, f"Background NeRF is not supported."
+        if self.cfg.backbone == 'raw_planes':
+            plane_feats = self.tri_plane_decoder.repeat(len(ws), 1, 1, 1) + ws.sum() * 0.0 # [batch_size, 3, 256, 256]
+        else:
+            plane_feats = self.tri_plane_decoder(ws[:, :self.tri_plane_decoder.num_ws], **block_kwargs) # [batch_size, 3 * feat_dim, tp_h, tp_w]
+        ray_d_world = torch.zeros_like(coords) # [batch_size, num_points, 3]
+        output = run_batchwise(
+            fn=tri_plane_renderer, data=dict(coords=coords, ray_d_world=ray_d_world),
+            batch_size=max_batch_res ** 3,
+            dim=1, mlp=self.tri_plane_mlp, x=plane_feats, scale=self.cfg.dataset.cube_scale,
+        ) # [batch_size, num_coords, num_feats]
+
+        return output[:, :, -1:] # [batch_size, num_coords, 1]
+
     def render_spherical_bg(self, ws_bg: torch.Tensor, ray_o_world: torch.Tensor, ray_d_world: torch.Tensor, max_batch_res: int) -> torch.Tensor:
         batch_size, num_pixels, _ = ray_o_world.shape
         white_back_end_idx = self.img_channels if self.cfg.dataset.white_back else 0

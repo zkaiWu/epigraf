@@ -192,7 +192,7 @@ def training_loop(
             opt = dnnlib.util.construct_class_by_name(module.parameters(), **opt_kwargs) # subclass of torch.optim.Optimizer
             phases += [dnnlib.EasyDict(name=name+'main', module=module, opt=opt, interval=1)]
             if name == 'G':
-                assert cfg.model.loss_kwargs.pl_weight > 0
+                assert cfg.model.loss_kwargs.pl_weight > 0 or cfg.model.loss_kwargs.density_loss > 0
                 phases += [dnnlib.EasyDict(name='Greg_pl', module=module, opt=opt, interval=reg_interval)]
             else:
                 phases += [dnnlib.EasyDict(name='Dreg', module=module, opt=opt, interval=reg_interval)]
