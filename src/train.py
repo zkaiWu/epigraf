@@ -197,7 +197,11 @@ def main(cfg: DictConfig):
     c.kimg_per_tick = opts.tick
     c.random_seed = c.training_set_kwargs.random_seed = opts.seed
     c.data_loader_kwargs.num_workers = opts.workers
-    c.G_reg_interval = 4 if cfg.model.loss_kwargs.pl_weight > 0 else 0 # Enable lazy regularization for G.
+    c.G_reg_interval = 4 if (cfg.model.loss_kwargs.pl_weight > 0 or cfg.model.loss_kwargs.density_loss > 0) else 0 # Enable lazy regularization for G.
+    # if cfg.model.loss_kwargs.pl_weight > 0 or cfg.model.loss_kwargs.density_loss > 0:
+    #     c.G_reg_interval = 4
+    # else:
+    #     c.G_reg_interval = 0
     c.D_reg_interval = 16 if c.loss_kwargs.r1_gamma > 0 else None
 
     # Sanity checks.
