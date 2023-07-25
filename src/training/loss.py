@@ -127,7 +127,6 @@ class StyleGAN2Loss(Loss):
         # Density Regularization
         # if phase in ['Greg', 'Gboth'] and self.cfg.model.loss_kwargs.density_loss > 0 and self.G.rendering_kwargs['reg_type'] == 'l1':
         if phase in ['Greg_pl', 'Gall'] and self.cfg.model.loss_kwargs.density_loss > 0:
-            import pdb; pdb.set_trace()
             ws = self.G.mapping(gen_z, gen_c, gen_camera_angles_cond, update_emas=False)
             if self.style_mixing_prob > 0:
                 with torch.autograd.profiler.record_function('style_mixing'):
@@ -135,13 +134,13 @@ class StyleGAN2Loss(Loss):
                     cutoff = torch.where(torch.rand([], device=ws.device) < self.style_mixing_prob, cutoff, torch.full_like(cutoff, ws.shape[1]))
                     ws[:, cutoff:] = self.G.mapping(torch.randn_like(z), c, update_emas=False)[:, cutoff:]
             initial_coordinates = torch.rand((ws.shape[0], 1000, 3), device=ws.device) * 2 - 1
-            perturbed_coordinates = initial_coordinates + torch.randn_like(initial_coordinates) * self.G.rendering_kwargs['density_reg_p_dist']
+            perturbed_coordinates = initial_coordinates + torch.randn_like(initial_coordinates) * self.cfg.model.loss_kwargs.density_reg_dist
             all_coordinates = torch.cat([initial_coordinates, perturbed_coordinates], dim=1)
-            sigma = self.G.compute_densities_gradient(ws, all_coordinates, torch.randn_like(all_coordinates), update_emas=False)
+            sigma = self.G.synthesis.compute_densities_gradient(ws, all_coordinates, update_emas=False)
             sigma_initial = sigma[:, :sigma.shape[1]//2]
             sigma_perturbed = sigma[:, sigma.shape[1]//2:]
 
-            TVloss = torch.nn.functional.l1_loss(sigma_initial, sigma_perturbed) * self.G.rendering_kwargs['density_reg']
+            TVloss = torch.nn.functional.l1_loss(sigma_initial, sigma_perturbed) * self.cfg.model.loss_kwargs.density_loss 
             TVloss.mul(gain).backward()
 
         # Dmain: Minimize logits for generated images.
